@@ -1,0 +1,13 @@
+{
+  "name": "ascii-evangelist",
+  "version": "1.0.0",
+  "description": "AsciiDoc documentation site",
+  "private": true,
+  "scripts": {
+    "build": "node build.js",
+    "start": "node build.js && npx serve dist -p 8080"
+  },
+  "dependencies": {
+    "@asciidoctor/core": "^3.0.4"
+  }
+}

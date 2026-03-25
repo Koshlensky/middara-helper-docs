@@ -1,0 +1,109 @@
+= Архитектура приложения
+
+Приложение построено на принципах *Clean Architecture* и однонаправленного потока данных (Unidirectional Data Flow). Основной архитектурный паттерн — *MVVM* (Model-View-ViewModel) с использованием StateFlow для реактивных обновлений UI.
+
+== Структура проекта
+
+----
+middara-helper/
+├── app/
+│   └── src/
+│       └── main/
+│           ├── assets/
+│           │   └── cards.json          ← база карт (JSON)
+│           ├── res/
+│           │   └── drawable/           ← изображения карт
+│           └── java/.../
+│               ├── data/
+│               │   ├── local/          ← Room БД (HeroState)
+│               │   │   ├── AppDatabase.kt
+│               │   │   ├── HeroDao.kt
+│               │   │   └── HeroEntity.kt
+│               │   ├── repository/     ← репозитории
+│               │   │   ├── CardRepository.kt
+│               │   │   └── HeroRepository.kt
+│               │   └── model/          ← модели данных
+│               │       ├── Card.kt
+│               │       └── CardType.kt
+│               ├── ui/
+│               │   ├── catalog/        ← экран каталога карт
+│               │   │   ├── CatalogScreen.kt
+│               │   │   └── CatalogViewModel.kt
+│               │   ├── deck/           ← экран колоды героя
+│               │   │   ├── DeckScreen.kt
+│               │   │   └── DeckViewModel.kt
+│               │   └── theme/          ← тема приложения
+│               └── MainActivity.kt
+└── build.gradle.kts
+----
+
+== Слои архитектуры
+
+=== Data Layer (Слой данных)
+
+Содержит два источника данных:
+
+*Карты (CardRepository)*::
+Карты загружаются из файла `assets/cards.json` при первом запросе и кэшируются в памяти. JSON парсится через *Gson*. Данные доступны только для чтения — карты неизменяемы в рантайме.
+
+*Состояние героя (HeroRepository)*::
+Колода героя (список выбранных карт) хранится в локальной SQLite-базе через *Room*. Репозиторий предоставляет реактивный поток (`Flow<HeroEntity>`) для подписки ViewModel.
+
+=== ViewModel Layer
+
+ViewModel получает данные из репозиториев и преобразует их в `UiState` — неизменяемый снимок состояния экрана. UI подписывается на `StateFlow<UiState>` и перерисовывается при каждом изменении.
+
+Ключевые ViewModel:
+
+[%header, cols="2,4"]
+|===
+|ViewModel |Ответственность
+
+|`CatalogViewModel`
+|Загрузка всех карт, применение фильтров (тип, набор, поиск), формирование отфильтрованного списка
+
+|`DeckViewModel`
+|Загрузка текущей колоды героя, добавление/удаление карт с проверкой лимитов, сохранение через HeroRepository
+|===
+
+=== UI Layer (Compose)
+
+Весь UI написан на *Jetpack Compose*. Экраны — это `@Composable`-функции, которые принимают `UiState` и `onEvent`-обработчики. Никакой логики в Composable нет — только отображение.
+
+Навигация между экранами реализована через *Jetpack Navigation Compose*.
+
+== Поток данных
+
+----
+cards.json ──► CardRepository ──► CatalogViewModel ──► CatalogScreen
+                                        │
+                                   filter / search
+                                        │
+                                        ▼
+                                  filtered UiState
+                                        │
+                                        ▼
+                                  CatalogScreen (Compose)
+
+Room DB ──► HeroRepository ──► DeckViewModel ──► DeckScreen
+                                    │
+                              add/remove card
+                              (limit check)
+                                    │
+                                    ▼
+                              save to Room DB
+----
+
+== Ключевые решения
+
+*Карты только для чтения*::
+База карт (`cards.json`) загружается один раз и не изменяется в рантайме. Это упрощает управление состоянием: CardRepository не нужно следить за изменениями.
+
+*Room только для Hero State*::
+Персистентность нужна только для состояния колоды героя. Карты каждый раз загружаются из JSON — это удобно для обновления базы карт (достаточно обновить файл).
+
+*StateFlow вместо LiveData*::
+Используется `StateFlow` из Kotlin Coroutines как более современная и compose-friendly альтернатива LiveData. Не требует зависимости от lifecycle.
+
+*Coil для изображений*::
+Изображения карт загружаются через *Coil* с кэшированием, что обеспечивает плавный скроллинг каталога даже на слабых устройствах.
