@@ -714,6 +714,9 @@ details[open] summary { margin-bottom: 0.5rem; }
 .article h5,
 .article h6 {
   position: relative;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
 }
 
 .article h1 a.anchor,
@@ -722,12 +725,12 @@ details[open] summary { margin-bottom: 0.5rem; }
 .article h4 a.anchor,
 .article h5 a.anchor,
 .article h6 a.anchor {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  order: 2;
+  position: static;
+  transform: none;
   visibility: hidden;
-  margin-left: 0;
+  margin-left: 0.35rem;
+  flex-shrink: 0;
   color: var(--link);
   text-decoration: none;
   font-weight: normal;
