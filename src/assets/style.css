@@ -707,19 +707,32 @@ details[open] summary { margin-bottom: 0.5rem; }
 .breadcrumb-item { color: var(--text); }
 
 /* ===== Section anchors (sectanchors) ===== */
+.article h1,
+.article h2,
+.article h3,
+.article h4,
+.article h5,
+.article h6 {
+  position: relative;
+}
+
 .article h1 a.anchor,
 .article h2 a.anchor,
 .article h3 a.anchor,
 .article h4 a.anchor,
 .article h5 a.anchor,
 .article h6 a.anchor {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
   visibility: hidden;
-  margin-left: 0.4rem;
+  margin-left: 0;
   color: var(--link);
   text-decoration: none;
   font-weight: normal;
   font-size: 0.85em;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 .article h1 a.anchor::before,
 .article h2 a.anchor::before,
